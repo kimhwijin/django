@@ -5,7 +5,7 @@ chardet==4.0.0
 Django==3.2a1
 idna==2.10
 mysql==0.0.2
-mysqlclient @ file:///C:/Users/azxsd/Downloads/mysqlclient-1.4.6-cp38-cp38-win32.whl
+mysql-connector-python==8.0.21
 numpy==1.20.1
 pandas==1.2.2
 python-dateutil==2.8.1
@@ -16,3 +16,10 @@ soupsieve==2.2
 sqlparse==0.4.1
 urllib3==1.26.3
 wsl==0.12
+
+
+
+
+
+
+
