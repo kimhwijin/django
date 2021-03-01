@@ -68,34 +68,17 @@
         {% endwith %}
       </div>
       
-      <canvas class="my-3 w-50 border" id="myChart" width="900" height="380"></canvas>
-
-      <script>
-      var ctx = document.getElementById('myChart');
-      
-      var closedt = {{ chartcloseinfo|safe }};
-      var dtdt = {{ chartdateinfo|safe }};
-      var myChart = new Chart(ctx, {
-          type: 'bar',
-          data: {
-              labels: dtdt,
-              datasets: [{
-                  label: [1],
-                  data: closedt,
-                  borderWidth: 1
-              }]
-          },
-          options: {
-              scales: {
-                  yAxes: [{
-                      ticks: {
-                          beginAtZero: true
-                      }
-                  }]
-              }
-          }
-      });
-      </script>
+     {% if graph %}
+      <div style="width:600;height:500">
+    {{ graph|safe }}
+      </div>
+    {% endif %}
+    
+    {% if graph1 %}
+      <div style="width:600;height:500">
+    {{ graph|safe }}
+      </div>
+    {% endif %}
 
 
       <!-- 시세현황 -->
