@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 import numpy as np
+import logging
 
 def get_listinfo(code_number):
     #종목코드에 따른 현재가, 등락폭(listview에 필요한)을 가져온다.
@@ -159,14 +160,16 @@ from datetime import datetime
 import pandas as pd
 from pandas.tseries.offsets import *
 import plotly.graph_objs as go
+import plotly.offline as opy
 from pywinauto import application
 import time
 import os
 from datetime import datetime
 
 def makeGraph(code_number):
-
+    print('debuging makegraph')
     # 증권사 API 자동 실행
+
     os.system('taskkill /IM coStarter* /F /T')
     os.system('taskkill /IM CpStart* /F /T')
     os.system('wmic process where "name like \'%coStarter%\'" call terminate')
@@ -174,9 +177,10 @@ def makeGraph(code_number):
     time.sleep(5)        
 
     app = application.Application()
+    #cp : creon plus , id : id, pwd : password
     app.start('C:\CREON\STARTER\coStarter.exe /prj:cp /id:{id} /pwd:{pwd} /pwdcert:{pwd} /autostart'.format(
     id='sheee7', pwd='sh5167!!'))
-    time.sleep(60)
+    time.sleep(30)
 
     # 서버 접속 확인
     objCpCybos = win32com.client.Dispatch("CpUtil.CpCybos")
@@ -187,13 +191,17 @@ def makeGraph(code_number):
     else:
         print("서버가 정상적으로 연결되지 않았습니다. ")
         exit(0)
-    #testdf = pd.read_excel('21.01.12_stock_data.xlsx')
-    #testdf = pd.read_excel('21.01.29_stock_data.xlsx')
+
     testdf = pd.read_excel(os.getcwd() + '\\stock\\21.02.05_stock_data.xlsx')
-    # 종목명 -> 종목코드 변환
+    #종목번호 -> 종목명
     instCpStockCode = win32com.client.Dispatch("CpUtil.CpStockCode")
+    if instCpStockCode:
+        logging.error("CpUtil.CpStockCode이 실행중이지 않습니다.")
+    
     stock_code = code_number
     stock_name = instCpStockCode.CodeToName(stock_code)
+
+    #웹에서 받아옴
     per = 50
     table_name = stock_name
 
@@ -205,54 +213,54 @@ def makeGraph(code_number):
     # 오브젝트 가져오기
     inStockMst = win32com.client.Dispatch("dscbo1.StockMst") #현재 미사용
     inStockChart = win32com.client.Dispatch("CpSysDib.StockChart")
+    #참고 http://money2.creontrade.com/e5/mboard/ptype_basic/HTS_Plus_Helper/DW_Basic_Read_Page.aspx?boardseq=284&seq=102&page=1&searchString=StockChart&p=8841&v=8643&m=9505
+    inStockChart.SetInputValue(0, 'A' + stock_code) # 0 - 종목 코드
+    inStockChart.SetInputValue(1, ord('1')) # 1 - 요청구분 / 1 : 기간 2 : 개수
+    inStockChart.SetInputValue(2, stock_presentday) # 2 - 요청종료일 YYYYMMDD형식의 데이터마지막날짜
+    inStockChart.SetInputValue(3, stock_pastday) # 3 - 요청시작일 YYYYMMDD형식의 데이터처음날짜
+    #4 - 요청 데이터의 개수
+    inStockChart.SetInputValue(5, [0,2,3,4,5,8,12]) #5 - 가져올데이터의 종류 [날짜,시가,고가,저가,종가,거래량,상장주식수] url참고
+    inStockChart.SetInputValue(6, ord('D')) # 6 - D : 일봉
+    inStockChart.SetInputValue(9, ord('1')) # 9 - 1 : 수정주가 사용 , 0 : 무수정주가
 
-    inStockChart.SetInputValue(0, stock_code) # 종목 코드 - 삼성전자
-    inStockChart.SetInputValue(1, ord('1')) # 기간으로 확인
-    inStockChart.SetInputValue(2, stock_presentday) # 최신일자
-    inStockChart.SetInputValue(3, stock_pastday) # 과거일자
-    inStockChart.SetInputValue(5, [0,2,3,4,5,8]) # 날짜,시가,고가,저가,종가,거래량
-    inStockChart.SetInputValue(6, ord('D')) # 차트 주가 - 일간 차트 요청
-    inStockChart.SetInputValue(9, ord('1')) # 수정주가 사용
+    print(inStockChart)
 
     inStockChart.BlockRequest()
 
-    len = inStockChart.GetHeaderValue(3)
+    # 3 - 수신개수
+    cnt = inStockChart.GetHeaderValue(3)
 
     data = []
 
-    for i in range(len):
+    for i in range(cnt):
         line = []  # 안쪽 리스트로 사용할 빈 리스트 생성
-        date = inStockChart.GetDataValue(0, i)  # 날짜
-        open = inStockChart.GetDataValue(1, i)  # 시가
-        high = inStockChart.GetDataValue(2, i)  # 고가
-        low = inStockChart.GetDataValue(3, i)  # 저가
-        close = inStockChart.GetDataValue(4, i)  # 종가
-        vol = inStockChart.GetDataValue(5, i)  # 거래량
+        #SetInputValue 의 type 5 에 해당하는 데이터
+        line.append(inStockChart.GetDataValue(0, i)) # 날짜
+        line.append(inStockChart.GetDataValue(1, i))  # 시가
+        line.append(inStockChart.GetDataValue(2, i))  # 고가
+        line.append(inStockChart.GetDataValue(3, i))  # 저가
+        line.append(inStockChart.GetDataValue(4, i))  # 종가
+        line.append(inStockChart.GetDataValue(5, i))  # 거래량
+        #line.append(inStockChart.GetDataValue(6, i))  # 상장주식수
 
-        line.append(date)  # 리스트에 내용 추가
-        line.append(open)
-        line.append(high)
-        line.append(low)
-        line.append(close)
-        line.append(vol)
         data.append(line)  # 전체 리스트에 안쪽 리스트를 추가
 
     labels = ['Date', 'Open', 'High', 'Low', 'Close', 'Volume']
 
-    # 리스트 형태를 라벨이 있는 데이터프레임으로 변환하는 내용
+    #data(list) -> df1(dataframe)
+    
     df1 = pd.DataFrame.from_records(data, columns=labels)
     # Date 일자를 문자열로 변환
     df1['Date'] = df1['Date'].astype('str')
     # datetime 를 이용해서 날짜로 변환
     df1['Date'] = pd.to_datetime(df1['Date'])
-    #df1.info()
-
+    print('df1:::')
+    print(df1)
     # 스크랩한 데이터에서 검색하려는 종목명과 일치하는 것을 찾아내기
-    sam = (testdf['종목명'] == stock_name)
-    ## SettingWithCopyWarning 오류 의심부분
-    testdf_sam = testdf[sam].copy()
+    #sam
+    is_stock_row = testdf['종목명'] == stock_name
     # 스크랩한 데이터에서 '2019/12'가 포함되는 것을 찾아내기
-    data2019 = (testdf['index'] == '2019/12')
+    is_data2019 = testdf['index'] == '2019/12'
 
     #testdf_data2019 = testdf[data2019]
 
@@ -261,68 +269,71 @@ def makeGraph(code_number):
 
     # 여러 조건에 부합되는 결과값 (& and // | or)
     # '종목명'과 '2019/12'가 포함된 데이터만 찾기
-    testdf_total = testdf[sam & data2019].copy()
-    #testdf_total
+    testdf_total = testdf[is_stock_row & is_data2019]
+    #모든기간의 종목데이터
+    testdf_stock_row = testdf[is_stock_row]
 
-    #testdf_sam
+
     # API를 통해서 최신 발행주식수를 가져오는 것이 'Best'이지만... 코드가 많이 추가되니 간단하게 넘어감..ㅋㅋ
     # 스크랩한 데이터 중 발행주식수가 있으니 2019년의 발행주식수를 가져옴
     stock_num = testdf_total['발행주식수'].copy()
-    stock_num = stock_num.values
+    stock_num = int(stock_num.values)
     # 나만의 목표가 계산식
-    testdf_sam['적정가격'] = round((testdf_sam['영업이익']*per *100000000 / (stock_num *1000) + (testdf_sam['EPS(원)']*per)) /2,-2)
+    testdf_stock_row['적정가격'] = round((testdf_stock_row['영업이익']*per *100000000 / (stock_num * 1000) + (testdf_stock_row['EPS(원)']*per)) /2,-2)
     #testdf_sam[['index', '적정가격']]
     #testdf_sam['index'] = testdf_sam['index'].astype('str')
 
     # 적정가격을 차트상에 표시하기 위해 일자로 변경
     # 단순작업으로 바꾸는 코드... 이기 때문에 2024, 2025가 되더라도 작동하도록 수정할 것
-    testdf_sam.loc[testdf_sam['index'] == '2020/12(P)','index'] ='2020/12'
-    testdf_sam.loc[testdf_sam['index'] == '2020/12(E)','index'] ='2020/12'
-    testdf_sam.loc[testdf_sam['index'] == '2021/12(E)','index'] ='2021/12'
-    testdf_sam.loc[testdf_sam['index'] == '2022/12(E)','index'] ='2022/12'
-    testdf_sam.loc[testdf_sam['index'] == '2023/12(E)','index'] ='2023/12'
+    testdf_stock_row.loc[testdf_stock_row['index'] == '2020/12(P)','index'] ='2020/12'
+    testdf_stock_row.loc[testdf_stock_row['index'] == '2020/12(E)','index'] ='2020/12'
+    testdf_stock_row.loc[testdf_stock_row['index'] == '2021/12(E)','index'] ='2021/12'
+    testdf_stock_row.loc[testdf_stock_row['index'] == '2022/12(E)','index'] ='2022/12'
+    testdf_stock_row.loc[testdf_stock_row['index'] == '2023/12(E)','index'] ='2023/12'
 
     # datetime을 이용해 년/월 형식으로 수정함 (2020/12 -> 2020-12-01)
-    testdf_sam['index'] = pd.to_datetime(testdf_sam['index'], format='%Y/%m')
+    testdf_stock_row['index'] = pd.to_datetime(testdf_stock_row['index'], format='%Y/%m')
 
     # 2019-12-01의 경우 일요일(주말)이라 차트상에 표시가 안되는 현상을 방지하고자, 일자를 바꿈
-    testdf_sam['index'] = testdf_sam['index'] + Week(weekday=4)
-
+    testdf_stock_row['index'] = testdf_stock_row['index'] + Week(weekday=4)
     #testdf_sam[['index', '적정가격']]
     #testdf_sam
+
+
 
     # 현재주가 추출
     nowprice = df1.loc[0, 'Close']
     # 2021년 목표주가 추출(2022년 7)
-    tp21 = testdf_sam.iloc[6, 33]
-    tp22 = testdf_sam.iloc[7, 33]
+    tp21 = testdf_stock_row.iloc[6, 33]
+    tp22 = testdf_stock_row.iloc[7, 33]
     # 2021년 영업이익 추출
-    op21 = testdf_sam.iloc[6, 2]
-    op22 = testdf_sam.iloc[7, 2]
+    op21 = testdf_stock_row.iloc[6, 2]
+    op22 = testdf_stock_row.iloc[7, 2]
     # 목표주가 상승여력(퍼센트)
     tpper21 = round(((tp21-nowprice)/nowprice*100),2)
     tpper22 = round(((tp22-nowprice)/nowprice*100),2)
 
     title = stock_name + ' 목표주가 / PER ' + str(per) +' / '+ str(nowprice) +'원('+ str(tp21) + '원 ' + str(round(tpper21,2)) + '%, '+str(op21)+'억)'
 
+    
     fig = go.Figure(data=[go.Candlestick(x=df1['Date'],
                     open=df1['Open'],
                     high=df1['High'],
                     low=df1['Low'],
                     close=df1['Close'])])
-
+    print(fig)                    
+    
     fig.update_layout(
         margin=dict(l=20, r=20, t=60, b=20),
-        title_text=title
+        title_text=title    
     )
 
     fig.add_trace(go.Scatter(
         name="목표주가",
-        mode="markers+lines", x=testdf_sam["index"], y=testdf_sam["적정가격"],
+        mode="markers+lines", x=testdf_stock_row["index"], y=testdf_stock_row["적정가격"],
         xperiod="M1",
-        xperiodalignment="middle"
+        xperiodalignment="middle",
     ))
-
     """
     fig.add_hline(y=80000, line_dash="dot",
                 annotation_text="8만 전자",
@@ -353,5 +364,17 @@ def makeGraph(code_number):
             ])
         )
     )
+    '''
+    x = [-2,0,4,6,7]
+    y = [q**2-q+3 for q in x]
+    trace1 = go.Scatter(x=x, y=y, marker={'color': 'red', 'symbol': 104, 'size': "10"},
+                        mode="lines",  name='1st Trace')
 
-    return fig
+    data=go.Data([trace1])
+    layout=go.Layout(title="Meine Daten", xaxis={'title':'x1'}, yaxis={'title':'x2'})
+    figure=go.Figure(data=data,layout=layout)
+    div = opy.plot(figure, auto_open=False, output_type='div')
+    #--
+    '''
+    div = opy.plot(fig, auto_open=False, output_type='div')
+    return div
