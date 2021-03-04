@@ -45,13 +45,28 @@ def StockInfo_Detail_View(request,code_number):
     chart_date_info = json.dumps(list(chartinfo.to_dict()['Date'].values()))
     print(chart_close_info)
     print(chart_date_info)
-    
+
+    #example plotly graph
+    '''
+    x = [-2,0,4,6,7]
+    y = [q**2-q+3 for q in x]
+    trace1 = go.Scatter(x=x, y=y, marker={'color': 'red', 'symbol': 104, 'size': "10"},
+                        mode="lines",  name='1st Trace')
+
+    data=go.Data([trace1])
+    layout=go.Layout(title="Meine Daten", xaxis={'title':'x1'}, yaxis={'title':'x2'})
+    figure=go.Figure(data=data,layout=layout)
+    div = opy.plot(figure, auto_open=False, output_type='div')
+    #--
+    '''
     context = {
         'stockinfo' : stockinfo,
         'detailinfo' : detailinfo,
         'deltaprice' : django_crawler.get_price_info(code_number),
         'chartcloseinfo': chart_close_info,
         'chartdateinfo': chart_date_info,
+        #'graph': django_crawler.makeGraph(code_number),
+        'dataframe' : django_crawler.todayRatio().values.tolist(),
     }
     print('detail')
     return render(request,'stock/stockinfo_detail.html',context)

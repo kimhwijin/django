@@ -1,8 +1,11 @@
+h2 {
+  color : pink
+}
+h1 {
+  color : pink
+}
 body {
   font-size: 1rem;
-}
-h1{
-  color: blue;
 }
 
 .feather {
@@ -10,7 +13,11 @@ h1{
   height: 16px;
   vertical-align: text-bottom;
 }
-
+.fixedHeader{
+  background-color: blue;
+  position: sticky;
+  top: 0;
+}
 /*
  * Sidebar
  */
