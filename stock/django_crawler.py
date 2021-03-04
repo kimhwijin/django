@@ -137,8 +137,10 @@ def get_price_info(code_number):
 
 
 #차트정보
-import datetime
+
 def get_chart_info(code_number):
+
+    import datetime
     headers = {'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Whale/2.7.99.20 Safari/537.36'}
     count = 10
     timeframe = 'day'
@@ -162,9 +164,7 @@ from pandas.tseries.offsets import *
 import plotly.graph_objs as go
 import plotly.offline as opy
 from pywinauto import application
-import time
 import os
-from datetime import datetime
 
 def makeGraph(code_number):
     print('debuging makegraph')
@@ -378,3 +378,66 @@ def makeGraph(code_number):
     '''
     div = opy.plot(fig, auto_open=False, output_type='div')
     return div
+
+
+def todayRatio():
+    # 오브젝트 가져오기
+    g_objCodeMgr = win32com.client.Dispatch('CpUtil.CpCodeMgr')
+    g_objCpStatus = win32com.client.Dispatch('CpUtil.CpCybos')
+    g_objCpTrade = win32com.client.Dispatch('CpTrade.CpTdUtil')
+
+    objRq = win32com.client.Dispatch("CpSysDib.MarketEye")
+
+    codeList = g_objCodeMgr.GetStockListByMarket(1)  # 거래소
+    codeList2 = g_objCodeMgr.GetStockListByMarket(2)  # 코스닥
+    allcodelist = codeList + codeList2 #전체 코드리스트
+
+    rqField = [0,20,118,120] #요청 필드 종목코드 , 시가 , 상장주식수, 당일외국인순매수, 당일기관순매수
+    rqCodeList = [] #인자로 넣어줄 코드리스트
+
+    sumcnt = 0 #가져온 데이터 개수
+    df = pd.DataFrame(columns=('code', '상장주식수','당일외국인순매수','당일기관순매수','외국인순매수비율','기관순매수비율')) 
+
+
+    codeindex = 0 #코드리스트 200개씩 받아오기위한 인덱스
+    allcodeindex = len(allcodelist) #전체 코드개수
+
+    while True:
+
+        rqCodeList = []
+        for i in range(200): #일단 200개씩 추가
+            if allcodeindex <= codeindex + i: #최대 코드개수를 초과하면 멈춤
+                break
+            rqCodeList.append(allcodelist[codeindex + i])
+        codeindex += len(rqCodeList) #다음200개 준비
+        
+        
+        remainCount = g_objCpStatus.GetLimitRemainCount(1)  # 1 시세 제한
+        if remainCount <= 0:
+            print('시세 연속 조회 제한 회피를 위해 sleep', g_objCpStatus.LimitRequestRemainTime)
+            time.sleep(g_objCpStatus.LimitRequestRemainTime / 1000)
+    
+        objRq.SetInputValue(0, rqField) # 받아올 데이터 지정
+        objRq.SetInputValue(1, rqCodeList) #받아올 종목 지정
+
+        objRq.BlockRequest()
+
+        cnt = objRq.GetHeaderValue(2)
+        sumcnt += cnt
+        for i in range(cnt):
+            item = {}
+            item['code'] = objRq.GetDataValue(0, i) #종목코드
+            item['상장주식수'] = objRq.GetDataValue(1, i) #상장주식수
+            item['당일외국인순매수'] = objRq.GetDataValue(2, i) #당일외국인순매수
+            item['당일기관순매수'] = objRq.GetDataValue(3, i) #당일외국인순매수
+            item['외국인순매수비율'] = round(item['당일외국인순매수']  / (item['상장주식수'] / 100000) , 6)
+            item['기관순매수비율'] = round(item['당일기관순매수'] / (item['상장주식수'] / 100000) , 6)
+            
+            
+            df.loc[len(df)] = item
+
+        if sumcnt >= allcodeindex:
+            break
+    df.sort_values(by=['외국인순매수비율'], axis=0, ascending=False, inplace=True)
+    #df.sort_values(by=['기관순매수비율'], axis=0, ascending=False)
+    return df

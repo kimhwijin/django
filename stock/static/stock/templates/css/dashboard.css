@@ -1,16 +1,26 @@
+h2 {
+  color : red
+}
+h1 {
+  color : red
+}
 body {
   font-size: 1rem;
-}
-
-h1 {
-  color:bisque;
 }
 .feather {
   width: 16px;
   height: 16px;
   vertical-align: text-bottom;
 }
+/*
+table header sticky
 
+.fixedHeader{
+  background-color: blue;
+  position: sticky;
+  top: 0;
+}
+*/
 /*
  * Sidebar
  */
