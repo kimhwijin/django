@@ -169,7 +169,7 @@ import os
 def makeGraph(code_number):
     print('debuging makegraph')
     # 증권사 API 자동 실행
-
+    '''
     os.system('taskkill /IM coStarter* /F /T')
     os.system('taskkill /IM CpStart* /F /T')
     os.system('wmic process where "name like \'%coStarter%\'" call terminate')
@@ -181,7 +181,8 @@ def makeGraph(code_number):
     app.start('C:\CREON\STARTER\coStarter.exe /prj:cp /id:{id} /pwd:{pwd} /pwdcert:{pwd} /autostart'.format(
     id='sheee7', pwd='sh5167!!'))
     time.sleep(30)
-
+    '''
+    
     # 서버 접속 확인
     objCpCybos = win32com.client.Dispatch("CpUtil.CpCybos")
     bConnect = objCpCybos.IsConnect
@@ -381,16 +382,21 @@ def makeGraph(code_number):
 
 
 def todayRatio():
+    print('todayRatio')
     # 오브젝트 가져오기
     g_objCodeMgr = win32com.client.Dispatch('CpUtil.CpCodeMgr')
     g_objCpStatus = win32com.client.Dispatch('CpUtil.CpCybos')
     g_objCpTrade = win32com.client.Dispatch('CpTrade.CpTdUtil')
 
+    #요청 오브젝트
     objRq = win32com.client.Dispatch("CpSysDib.MarketEye")
 
     codeList = g_objCodeMgr.GetStockListByMarket(1)  # 거래소
     codeList2 = g_objCodeMgr.GetStockListByMarket(2)  # 코스닥
     allcodelist = codeList + codeList2 #전체 코드리스트
+
+    #상장주식수 20억이상인 종목 // 2021-3-14 현재 삼성전자 1개
+    hugeCodeList = [g_objCodeMgr.IsBigListingStock(i) for i in allcodelist] #상장주식수 수신시 1000단위로 받아옴.
 
     rqField = [0,20,118,120] #요청 필드 종목코드 , 시가 , 상장주식수, 당일외국인순매수, 당일기관순매수
     rqCodeList = [] #인자로 넣어줄 코드리스트
@@ -401,7 +407,7 @@ def todayRatio():
 
     codeindex = 0 #코드리스트 200개씩 받아오기위한 인덱스
     allcodeindex = len(allcodelist) #전체 코드개수
-
+    print(1234)
     while True:
 
         rqCodeList = []
@@ -428,6 +434,8 @@ def todayRatio():
             item = {}
             item['code'] = objRq.GetDataValue(0, i) #종목코드
             item['상장주식수'] = objRq.GetDataValue(1, i) #상장주식수
+            if hugeCodeList[sumcnt - cnt + i]:
+                item['상장주식수'] *= 1000
             item['당일외국인순매수'] = objRq.GetDataValue(2, i) #당일외국인순매수
             item['당일기관순매수'] = objRq.GetDataValue(3, i) #당일외국인순매수
             item['외국인순매수비율'] = round(item['당일외국인순매수']  / (item['상장주식수'] / 100000) , 6)
@@ -436,8 +444,9 @@ def todayRatio():
             
             df.loc[len(df)] = item
 
-        if sumcnt >= allcodeindex:
+        if sumcnt >= 200:#allcodeindex:
             break
     df.sort_values(by=['외국인순매수비율'], axis=0, ascending=False, inplace=True)
+    print(df)
     #df.sort_values(by=['기관순매수비율'], axis=0, ascending=False)
     return df

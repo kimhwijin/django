@@ -9,7 +9,6 @@ from django.urls import reverse
 #template
 class StockModelView(TemplateView):
     template_name = 'stock/stockinfo_home.html'
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["model_list"] = ['StockInfo',]
@@ -24,7 +23,6 @@ def StockInfo_List_View(request):
     for stockinfo in stockinfo_list:
         temp_list = django_crawler.get_listinfo(stockinfo.code)
         context_list.append((temp_list))
-
     context = {
         'object_info_list' : context_list,
     }
@@ -65,9 +63,11 @@ def StockInfo_Detail_View(request,code_number):
         'deltaprice' : django_crawler.get_price_info(code_number),
         'chartcloseinfo': chart_close_info,
         'chartdateinfo': chart_date_info,
-        #'graph': django_crawler.makeGraph(code_number),
+        'graph': django_crawler.makeGraph(code_number),
         'dataframe' : django_crawler.todayRatio().values.tolist(),
     }
+
+
     print('detail')
     return render(request,'stock/stockinfo_detail.html',context)
 
@@ -110,3 +110,40 @@ def Delete_Favor(request,pk):
     print('delete')
     StockInfo.objects.filter(pk=pk).delete()
     return HttpResponseRedirect(reverse('stock:stockinfo_list'))
+
+
+#전체 주식관련정보 로딩 함수
+def Total_Init(request):
+    print('init')
+    #세션 확인
+    #세션 저장
+    request.session['test'] = "hahaha"
+    #request.session['df'] = json.loads(django_crawler.todayRatio()),
+    request.session['sort'] = "외국인"
+    #세션 존재
+    return HttpResponseRedirect(reverse('stock:total_stockdata_home'))
+
+import pandas as pd
+
+def Total_Home(request):
+    print('home')
+    context = {
+        'test' : request.session['test'],
+        #'df' : df.values.tolist(),
+        'dataframe' : django_crawler.todayRatio().values.tolist(),
+        'sort' : request.session['sort'],
+    }
+
+    return render(request, 'stock/total_home.html', context)
+
+def Total_SessionChange(request):
+    #code 상장주식수 당일외국인순매수 당일기관당순매수 외국인순매수비율 기관순매수비율
+    print('SessionChanging')
+    if request.session['sort'] == "외국인":
+        request.session['sort'] = "기관"
+        sorted(request.session['df'], key=lambda x: x[5])
+    elif request.session['sort'] == "기관":
+        request.session['sort'] = "외국인"
+        sorted(request.session['df'], key=lambda x: x[4])
+
+    return HttpResponseRedirect(reverse('stock:total_stockdata_home'))

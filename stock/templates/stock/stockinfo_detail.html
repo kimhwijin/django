@@ -102,9 +102,14 @@
       </table>
     </div>
     </div>
-
+    <!--
+    <button type="button"  onclick="location.href='{% url 'stock:delete_favor' stockinfo.id%}'" class="btn btn-success">외국인순매수 정렬</button>
+    <button type="button"  onclick="location.href='{% url 'stock:delete_favor' stockinfo.id%}'" class="btn btn-success">기관순매수 정렬</button>
+    -->
+    session_id :{{session_id}}
+    test : {{test}}
       <!-- 시세현황 -->
-
+    
       <div class="p-4 p-md-2 mb-4 border-bottom text-white rounded bg-secondary "><h4>시세현황</h4></div>
 
       {% with detailinfo.1 as priceinfo %}

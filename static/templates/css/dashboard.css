@@ -1,3 +1,4 @@
+/*applyed css*/
 h2 {
   color : pink
 }
@@ -14,7 +15,6 @@ body {
   vertical-align: text-bottom;
 }
 .fixedHeader{
-  background-color: blue;
   position: sticky;
   top: 0;
 }
