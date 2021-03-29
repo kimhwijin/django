@@ -65,7 +65,7 @@ def StockInfo_Detail_View(request,code_number):
         'deltaprice' : django_crawler.get_price_info(code_number),
         'chartcloseinfo': chart_close_info,
         'chartdateinfo': chart_date_info,
-        #'graph': django_crawler.makeGraph(code_number),
+        'graph': django_crawler.makeGraph(code_number),
         'dataframe' : django_crawler.todayRatio().values.tolist(),
     }
     print('detail')

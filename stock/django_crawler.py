@@ -169,7 +169,7 @@ import os
 def makeGraph(code_number):
     print('debuging makegraph')
     # 증권사 API 자동 실행
-
+    '''
     os.system('taskkill /IM coStarter* /F /T')
     os.system('taskkill /IM CpStart* /F /T')
     os.system('wmic process where "name like \'%coStarter%\'" call terminate')
@@ -181,7 +181,7 @@ def makeGraph(code_number):
     app.start('C:\CREON\STARTER\coStarter.exe /prj:cp /id:{id} /pwd:{pwd} /pwdcert:{pwd} /autostart'.format(
     id='sheee7', pwd='sh5167!!'))
     time.sleep(30)
-
+    '''
     # 서버 접속 확인
     objCpCybos = win32com.client.Dispatch("CpUtil.CpCybos")
     bConnect = objCpCybos.IsConnect
