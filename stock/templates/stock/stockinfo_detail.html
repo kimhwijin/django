@@ -67,44 +67,28 @@
         </div>
         {% endwith %}
       </div>
-      
+    
+    <div class="p-4 p-md-2 mb-4 border-bottom text-white rounded bg-secondary ">
+    <h4>목표 주가 그래프</h4>
+    </div>
+
+    <form action="{% url 'stock:change_per' stockinfo.code %}" method="post">
+      {% csrf_token %}
+      {{form}}
+      <div class="row">
+        <div class="col-lg-2"><input class="form-control mb-2 " name="per_value" type="PER" placeholder="목표 PER" aria-label="Per"></div>
+        <div class="col"><button type="submit" class="btn btn-success">PER 변경</button></div>  
+      </div>
+    </form>
+
      {% if graph %}
       <div style="width:600;height:500">
     {{ graph|safe }}
       </div>
     {% endif %}
-    
-    <!--{% if dataframe %}
-    {{ dataframe|safe }}
-    {% endif %}-->
-    <div style="width: 100%; height: 400px; overflow-y:auto; overflow-x: hidden;">
-    <div class="table-responsive">
-      <table class="table">
-      <thead>
-      <tr class="fixedHeader">
-      <th class = "text-center fixedHeader" scope="col">종목코드</th>
-      <th class = "text-center fixedHeader" scope="col">상장주식수</th>
-      <th class = "text-center fixedHeader" scope="col">당일외국인순매수</th>
-      <th class = "text-center fixedHeader" scope="col">당일기관순매수</th>
-      <th class = "text-center fixedHeader" scope="col">외국인순매수비율</th>
-      <th class = "text-center fixedHeader" scope="col">기관순매수비율</th>
-      </tr>
-      </thead>
-      <tbody>
-      {% for items in dataframe %}
-        <tr>
-        {% for item in items %}
-          <td class="text-center">{{item}}</td>
-        {% endfor %}
-        </tr>
-      {% endfor %}
-      </tbody>
-      </table>
-    </div>
-    </div>
 
       <!-- 시세현황 -->
-
+    
       <div class="p-4 p-md-2 mb-4 border-bottom text-white rounded bg-secondary "><h4>시세현황</h4></div>
 
       {% with detailinfo.1 as priceinfo %}

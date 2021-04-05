@@ -1,14 +1,31 @@
 {% extends "dashboard.html" %}
 {% block content %}
 
+
+      <!--datatable
+      <link rel="stylesheet" href="https://cdn.datatables.net/t/bs-3.3.6/jqc-1.12.0,dt-1.10.11/datatables.min.css"/>  
+      -->
+      <script src="https://cdn.datatables.net/t/bs-3.3.6/jqc-1.12.0,dt-1.10.11/datatables.min.js"></script>
+      <script>
+        jQuery(function($){
+            $("#ratio-table").DataTable({
+              "paging":false,
+              "filter" : false,
+              "searching":  false,
+              "info": false,
+              columnDefs: [
+                // 2번째 항목 넓이를 100px로 설정
+                { targets: [0,1,2,3,4,5], width: 200 }
+              ]
+            });
+            
+        });
+      </script>
+    
+
       <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-        <!--
-        {% if sort == "외국인" %}
-        <button type="button" href="{% url 'stock:total_stockdata_change' %}" class="btn btn-success">기관 정렬</button>
-        {% else %}
-        <button type="button" href="{% url 'stock:total_stockdata_change' %}" class="btn btn-success">외국인 정렬</button>
-        {% endif %}
-        -->
+        <br>
+        <div class="p-4 p-md-2 mb-4 border-bottom text-white rounded bg-secondary "><h2>당일 외국인 기관 매수 비율</h2></div>
         {% if dataframe %}
         
           <div style="width: 100%; height: 100%; overflow-y:auto; overflow-x: hidden;">
@@ -17,11 +34,11 @@
             <thead>
             <tr class="fixedHeader">
             <th class = "text-center fixedHeader" scope="col">종목코드</th>
-            <th class = "text-center fixedHeader" scope="col">상장주식수</th>
-            <th class = "text-center fixedHeader" scope="col">당일외국인순매수</th>
-            <th class = "text-center fixedHeader" scope="col">당일기관순매수</th>
-            <th class = "text-center fixedHeader" scope="col">외국인순매수비율</th>
-            <th class = "text-center fixedHeader" scope="col">기관순매수비율</th>
+            <th class = "text-center fixedHeader" scope="col">시가총액(억)</th>
+            <th class = "text-center fixedHeader" scope="col">당일외국인순매수(원)</th>
+            <th class = "text-center fixedHeader" scope="col">당일기관순매수(원)</th>
+            <th class = "text-center fixedHeader" scope="col">외국인순매수비율(%)</th>
+            <th class = "text-center fixedHeader" scope="col">기관순매수비율(%)</th>
             </tr>
             </thead>
             <tbody>

@@ -25,9 +25,9 @@ with open('secret_key.txt') as f:
     SECRET_KEY = f.read().strip()
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['localhost','127.0.0.1','192.168.219.107','124.50.50.123']
+ALLOWED_HOSTS = ['localhost','127.0.0.1','192.168.0.10','14.52.23.30']
 
 
 # Application definition
@@ -84,12 +84,11 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'django_db',
         'USER': 'root',
-        'PASSWORD': 'Gnlwls01!',
+        'PASSWORD': '1234',
         'HOST': '127.0.0.1',
         'PORT': '3306',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/dev/ref/settings/#auth-password-validators

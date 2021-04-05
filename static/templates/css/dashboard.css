@@ -1,9 +1,4 @@
-h2 {
-  color : pink
-}
-h1 {
-  color : pink
-}
+
 body {
   font-size: 1rem;
 }
@@ -14,7 +9,6 @@ body {
   vertical-align: text-bottom;
 }
 .fixedHeader{
-  background-color: blue;
   position: sticky;
   top: 0;
 }

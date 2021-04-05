@@ -42,10 +42,9 @@ def get_all_detail_info(code_number):
     url = base_url.format(code_number)
     html = requests.get(url, headers = headers).text
     soup = BeautifulSoup(html, 'html.parser')
-
-    #기본 정보 0 
     detail_info = []
     group_info = []
+    #기본 정보 0
     ifrs = soup.select('div.corp_group2 > dl > dd')
     for ifrs_data in ifrs:
         group_info.append(ifrs_data.text)
@@ -57,7 +56,9 @@ def get_all_detail_info(code_number):
     for ifrs_data in ifrs:
         ifrs_data = ifrs_data.select('td')
         for ifrs_data_td in ifrs_data:
-                group_info.append(ifrs_data_td.text)
+            if ifrs_data_td == None:
+                continue
+            group_info.append(ifrs_data_td.text)
     detail_info.append(group_info)
     
     #실적이슈 2
@@ -67,14 +68,18 @@ def get_all_detail_info(code_number):
         group_info.append(ifrs_data.get_text())
     detail_info.append(group_info)
 
- 
+
     #운용사별 보유현황 3 
     group_info = []
     ifrs = soup.select('#svdMainGrid3 > table > tbody > tr')
     for ifrs_tr in ifrs:
+        if ifrs_tr.select_one('th') == None:
+            continue
         inst_list = [ifrs_tr.select_one('th').text]
         ifrs_tds = ifrs_tr.select('td')
         for ifrs_td in ifrs_tds:
+            if ifrs_td == None:
+                continue
             inst_list.append(ifrs_td.text)
         group_info.append(inst_list)
     detail_info.append(group_info)
@@ -86,12 +91,16 @@ def get_all_detail_info(code_number):
         inst_list = []
         temp = ifrs_tr.select_one('th > div')
         if temp.string == None:
+            if temp.select_one('a') == None:
+                continue
             inst_list.append(temp.select_one('a').text)
         else:
             inst_list.append(temp.text)
 
         ifrs_tds = ifrs_tr.select('td')
         for ifrs_td in ifrs_tds:
+            if ifrs_td == None:
+                continue
             inst_list.append(ifrs_td.text)
         group_info.append(inst_list)
     detail_info.append(group_info)
@@ -109,12 +118,13 @@ def get_all_detail_info(code_number):
         
         ifrs_tds = ifrs_tr.select('td')
         for ifrs_td in ifrs_tds:
+            if ifrs_td == None:
+                continue
             inst_list.append(ifrs_td.text)
         group_info.append(inst_list)
     detail_info.append(group_info)
 
     print(detail_info)
-
     return(detail_info)
 
 #가격변동 정보
@@ -166,8 +176,10 @@ import plotly.offline as opy
 from pywinauto import application
 import os
 
-def makeGraph(code_number):
+def makeGraph(code_number,per_value):
     print('debuging makegraph')
+
+
     # 증권사 API 자동 실행
     '''
     os.system('taskkill /IM coStarter* /F /T')
@@ -182,6 +194,7 @@ def makeGraph(code_number):
     id='sheee7', pwd='sh5167!!'))
     time.sleep(30)
     '''
+    
     # 서버 접속 확인
     objCpCybos = win32com.client.Dispatch("CpUtil.CpCybos")
     bConnect = objCpCybos.IsConnect
@@ -202,7 +215,7 @@ def makeGraph(code_number):
     stock_name = instCpStockCode.CodeToName(stock_code)
 
     #웹에서 받아옴
-    per = 50
+    per = per_value
     table_name = stock_name
 
     now = time.strftime('%Y%m%d')
@@ -254,8 +267,7 @@ def makeGraph(code_number):
     df1['Date'] = df1['Date'].astype('str')
     # datetime 를 이용해서 날짜로 변환
     df1['Date'] = pd.to_datetime(df1['Date'])
-    print('df1:::')
-    print(df1)
+
     # 스크랩한 데이터에서 검색하려는 종목명과 일치하는 것을 찾아내기
     #sam
     is_stock_row = testdf['종목명'] == stock_name
@@ -279,9 +291,10 @@ def makeGraph(code_number):
     stock_num = testdf_total['발행주식수'].copy()
     stock_num = int(stock_num.values)
     # 나만의 목표가 계산식
-    testdf_stock_row['적정가격'] = round((testdf_stock_row['영업이익']*per *100000000 / (stock_num * 1000) + (testdf_stock_row['EPS(원)']*per)) /2,-2)
+    testdf_stock_row['적정가격'] = round((testdf_stock_row['영업이익'] * per *100000000 / (stock_num * 1000) + (testdf_stock_row['EPS(원)']*per)) /2,-2)
     #testdf_sam[['index', '적정가격']]
     #testdf_sam['index'] = testdf_sam['index'].astype('str')
+    print(testdf_stock_row['적정가격'])
 
     # 적정가격을 차트상에 표시하기 위해 일자로 변경
     # 단순작업으로 바꾸는 코드... 이기 때문에 2024, 2025가 되더라도 작동하도록 수정할 것
@@ -334,6 +347,7 @@ def makeGraph(code_number):
         xperiod="M1",
         xperiodalignment="middle",
     ))
+
     """
     fig.add_hline(y=80000, line_dash="dot",
                 annotation_text="8만 전자",
@@ -381,27 +395,31 @@ def makeGraph(code_number):
 
 
 def todayRatio():
+    print('todayRatio')
     # 오브젝트 가져오기
     g_objCodeMgr = win32com.client.Dispatch('CpUtil.CpCodeMgr')
     g_objCpStatus = win32com.client.Dispatch('CpUtil.CpCybos')
     g_objCpTrade = win32com.client.Dispatch('CpTrade.CpTdUtil')
 
+    #요청 오브젝트
     objRq = win32com.client.Dispatch("CpSysDib.MarketEye")
 
     codeList = g_objCodeMgr.GetStockListByMarket(1)  # 거래소
     codeList2 = g_objCodeMgr.GetStockListByMarket(2)  # 코스닥
     allcodelist = codeList + codeList2 #전체 코드리스트
 
-    rqField = [0,20,118,120] #요청 필드 종목코드 , 시가 , 상장주식수, 당일외국인순매수, 당일기관순매수
+    #상장주식수 20억이상인 종목 // 2021-3-14 현재 삼성전자 1개
+    hugeCodeList = [g_objCodeMgr.IsBigListingStock(i) for i in allcodelist] #상장주식수 수신시 1000단위로 받아옴.
+
+    rqField = [4,5,6,7,17,20,118,120] #요청 필드// 현재가, 고가, 저가, 종목명, 상장주식수, 당일외국인순매수, 당일기관순매수
     rqCodeList = [] #인자로 넣어줄 코드리스트
 
     sumcnt = 0 #가져온 데이터 개수
-    df = pd.DataFrame(columns=('code', '상장주식수','당일외국인순매수','당일기관순매수','외국인순매수비율','기관순매수비율')) 
+    df = pd.DataFrame(columns=('종목명', '상장주식수','당일외국인순매수','당일기관순매수','외국인순매수비율','기관순매수비율')) 
 
 
     codeindex = 0 #코드리스트 200개씩 받아오기위한 인덱스
     allcodeindex = len(allcodelist) #전체 코드개수
-
     while True:
 
         rqCodeList = []
@@ -424,20 +442,34 @@ def todayRatio():
 
         cnt = objRq.GetHeaderValue(2)
         sumcnt += cnt
+
         for i in range(cnt):
             item = {}
-            item['code'] = objRq.GetDataValue(0, i) #종목코드
-            item['상장주식수'] = objRq.GetDataValue(1, i) #상장주식수
-            item['당일외국인순매수'] = objRq.GetDataValue(2, i) #당일외국인순매수
-            item['당일기관순매수'] = objRq.GetDataValue(3, i) #당일외국인순매수
-            item['외국인순매수비율'] = round(item['당일외국인순매수']  / (item['상장주식수'] / 100000) , 6)
-            item['기관순매수비율'] = round(item['당일기관순매수'] / (item['상장주식수'] / 100000) , 6)
-            
-            
+            item['종목명'] = objRq.GetDataValue(4, i) #종목명
+            item['상장주식수'] = objRq.GetDataValue(5, i) #상장주식수
+            if hugeCodeList[sumcnt - cnt + i]:
+                item['상장주식수'] *= 1000
+            today_avg = (objRq.GetDataValue(2,i) + objRq.GetDataValue(3,i))/ 2 
+            item['당일외국인순매수'] = int(objRq.GetDataValue(6, i) * today_avg) #당일외국인순매수 (매수량 * (당일저가 + 당일고가)/2 )
+            item['당일기관순매수'] = int(objRq.GetDataValue(7, i) * today_avg) #당일기관순매수
+
+            item['외국인순매수비율'] = round(item['당일외국인순매수'] / item['상장주식수'] / objRq.GetDataValue(0, i) * 100, 2) 
+            item['기관순매수비율'] = round(item['당일기관순매수'] / item['상장주식수'] / objRq.GetDataValue(0, i)  * 100 , 2) 
+
+            item['당일기관순매수'] = format(item['당일기관순매수'],',')
+            item['당일외국인순매수'] = format(item['당일외국인순매수'],',')
+            item['상장주식수'] = int(item['상장주식수'] * objRq.GetDataValue(1,i) / 100000000)
+            item['상장주식수'] = format(item['상장주식수'],',')
             df.loc[len(df)] = item
 
         if sumcnt >= allcodeindex:
             break
     df.sort_values(by=['외국인순매수비율'], axis=0, ascending=False, inplace=True)
+    print(df)
     #df.sort_values(by=['기관순매수비율'], axis=0, ascending=False)
     return df
+
+
+def NameToCode(stockName):
+    instCpStockCode = win32com.client.Dispatch("CpUtil.CpStockCode")
+    return instCpStockCode.NameToCode(stockName)

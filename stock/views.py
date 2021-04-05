@@ -9,7 +9,6 @@ from django.urls import reverse
 #template
 class StockModelView(TemplateView):
     template_name = 'stock/stockinfo_home.html'
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["model_list"] = ['StockInfo',]
@@ -24,7 +23,6 @@ def StockInfo_List_View(request):
     for stockinfo in stockinfo_list:
         temp_list = django_crawler.get_listinfo(stockinfo.code)
         context_list.append((temp_list))
-
     context = {
         'object_info_list' : context_list,
     }
@@ -35,16 +33,10 @@ def StockInfo_List_View(request):
 #
 import json
 def StockInfo_Detail_View(request,code_number):
+    print('detail')
 
     stockinfo = get_object_or_404(StockInfo,code=code_number)
-
-    
     detailinfo = django_crawler.get_all_detail_info(code_number)
-    chartinfo = django_crawler.get_chart_info(code_number)
-    chart_close_info = json.dumps(list(chartinfo.to_dict()['Close'].values()))
-    chart_date_info = json.dumps(list(chartinfo.to_dict()['Date'].values()))
-    print(chart_close_info)
-    print(chart_date_info)
 
     #example plotly graph
     '''
@@ -59,27 +51,22 @@ def StockInfo_Detail_View(request,code_number):
     div = opy.plot(figure, auto_open=False, output_type='div')
     #--
     '''
+
     context = {
         'stockinfo' : stockinfo,
         'detailinfo' : detailinfo,
         'deltaprice' : django_crawler.get_price_info(code_number),
-        'chartcloseinfo': chart_close_info,
-        'chartdateinfo': chart_date_info,
-        'graph': django_crawler.makeGraph(code_number),
-        'dataframe' : django_crawler.todayRatio().values.tolist(),
+        'graph': django_crawler.makeGraph(code_number,stockinfo.per),
+        #'dataframe' : django_crawler.todayRatio().values.tolist(),
     }
-    print('detail')
     return render(request,'stock/stockinfo_detail.html',context)
 
 
-from stock.forms import SearchKeywordForm
-
-
+from stock.forms import SearchKeywordForm, PerInputForm
 #
 def Search_Info(request):
     search_keyword_form = SearchKeywordForm(request.GET)
     kw_valid = False
-    temp_list = []
 
     if search_keyword_form.is_valid():
         skw = search_keyword_form.cleaned_data['search_keyword']
@@ -99,14 +86,63 @@ def Search_Info(request):
     print('search')
     return render(request, 'stock/stockinfo_search_result.html', context)
 
-#
+#save
 def Save_Favor(request,stock_name,code_number):
+
     print('save')
-    StockInfo.objects.create(name=stock_name, code=code_number)
+    per_input_form = PerInputForm(request.POST)
+    if per_input_form.is_valid():
+        per = per_input_form.cleaned_data['per_value']
+    else:
+        per = 10
+    #목표Per  default = 10
+    print(per)
+
+    StockInfo.objects.create(name=stock_name, code=code_number,per=per)
     return HttpResponseRedirect(reverse('stock:stockinfo_detail', args=[code_number,]))
 
-#
+
+#per save
+def Change_Per(request,code_number):
+
+    stockinfo = get_object_or_404(StockInfo,code=code_number)
+
+    per_input_form = PerInputForm(request.POST)
+
+    if per_input_form.is_valid():
+        per = per_input_form.cleaned_data['per_value']
+    else:
+        per = 10
+    print('Change_Per')
+
+    stockinfo.per = per
+    stockinfo.save()
+
+    return HttpResponseRedirect(reverse('stock:stockinfo_detail', args=[code_number,]))
+
+
+
 def Delete_Favor(request,pk):
     print('delete')
     StockInfo.objects.filter(pk=pk).delete()
     return HttpResponseRedirect(reverse('stock:stockinfo_list'))
+
+
+#전체 주식관련정보 로딩 함수
+def Total_Init(request):
+    print('init')
+    #세션 확인
+    #세션 저장
+    #request.session['sort'] = "외국인"
+    #세션 존재
+    return HttpResponseRedirect(reverse('stock:total_stockdata_home'))
+
+import pandas as pd
+
+def Total_Home(request):
+    print('home')
+    context = {
+        'dataframe' : django_crawler.todayRatio().values.tolist(),
+    }
+
+    return render(request, 'stock/total_home.html', context)
