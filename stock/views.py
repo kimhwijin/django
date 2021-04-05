@@ -104,7 +104,7 @@ def Save_Favor(request,stock_name,code_number):
 
 
 #per save
-def Change_Per(request,stock_name,code_number):
+def Change_Per(request,code_number):
 
     stockinfo = get_object_or_404(StockInfo,code=code_number)
 

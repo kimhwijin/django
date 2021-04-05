@@ -68,7 +68,18 @@
         {% endwith %}
       </div>
     
-    <h4>목표 PER 그래프</h4>
+    <div class="p-4 p-md-2 mb-4 border-bottom text-white rounded bg-secondary ">
+    <h4>목표 주가 그래프</h4>
+    </div>
+
+    <form action="{% url 'stock:change_per' stockinfo.code %}" method="post">
+      {% csrf_token %}
+      {{form}}
+      <div class="row">
+        <div class="col-lg-2"><input class="form-control mb-2 " name="per_value" type="PER" placeholder="목표 PER" aria-label="Per"></div>
+        <div class="col"><button type="submit" class="btn btn-success">PER 변경</button></div>  
+      </div>
+    </form>
 
      {% if graph %}
       <div style="width:600;height:500">
