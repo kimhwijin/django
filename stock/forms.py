@@ -8,3 +8,16 @@ class SearchKeywordForm(forms.Form):
         #check data
         return data
 
+
+class PerInputForm(forms.Form):
+    per_value = forms.IntegerField()
+
+    def clean_per_value(self):
+        data = self.cleaned_data['per_value']
+        if data < 0:
+            data *= -1
+        elif data == 0:
+            data = 10
+            
+        #check data
+        return data

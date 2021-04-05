@@ -166,8 +166,10 @@ import plotly.offline as opy
 from pywinauto import application
 import os
 
-def makeGraph(code_number):
+def makeGraph(code_number,per_value):
     print('debuging makegraph')
+
+
     # 증권사 API 자동 실행
     '''
     os.system('taskkill /IM coStarter* /F /T')
@@ -203,7 +205,7 @@ def makeGraph(code_number):
     stock_name = instCpStockCode.CodeToName(stock_code)
 
     #웹에서 받아옴
-    per = 50
+    per = per_value
     table_name = stock_name
 
     now = time.strftime('%Y%m%d')
@@ -255,8 +257,7 @@ def makeGraph(code_number):
     df1['Date'] = df1['Date'].astype('str')
     # datetime 를 이용해서 날짜로 변환
     df1['Date'] = pd.to_datetime(df1['Date'])
-    print('df1:::')
-    print(df1)
+
     # 스크랩한 데이터에서 검색하려는 종목명과 일치하는 것을 찾아내기
     #sam
     is_stock_row = testdf['종목명'] == stock_name
@@ -280,7 +281,7 @@ def makeGraph(code_number):
     stock_num = testdf_total['발행주식수'].copy()
     stock_num = int(stock_num.values)
     # 나만의 목표가 계산식
-    testdf_stock_row['적정가격'] = round((testdf_stock_row['영업이익']*per *100000000 / (stock_num * 1000) + (testdf_stock_row['EPS(원)']*per)) /2,-2)
+    testdf_stock_row['적정가격'] = round((testdf_stock_row['영업이익'] * per *100000000 / (stock_num * 1000) + (testdf_stock_row['EPS(원)']*per)) /2,-2)
     #testdf_sam[['index', '적정가격']]
     #testdf_sam['index'] = testdf_sam['index'].astype('str')
 
@@ -407,7 +408,6 @@ def todayRatio():
 
     codeindex = 0 #코드리스트 200개씩 받아오기위한 인덱스
     allcodeindex = len(allcodelist) #전체 코드개수
-    print(1234)
     while True:
 
         rqCodeList = []
@@ -438,13 +438,13 @@ def todayRatio():
                 item['상장주식수'] *= 1000
             item['당일외국인순매수'] = objRq.GetDataValue(2, i) #당일외국인순매수
             item['당일기관순매수'] = objRq.GetDataValue(3, i) #당일외국인순매수
-            item['외국인순매수비율'] = round(item['당일외국인순매수']  / (item['상장주식수'] / 100000) , 6)
-            item['기관순매수비율'] = round(item['당일기관순매수'] / (item['상장주식수'] / 100000) , 6)
+            item['외국인순매수비율'] = round(item['당일외국인순매수']  / (item['상장주식수'] / 100000) / 1000 , 5) #매우큰수(주식수)와 매우작은수(순매수량)의 계산시 매우작은수가 무시될수 있음
+            item['기관순매수비율'] = round(item['당일기관순매수'] / (item['상장주식수'] / 100000) / 1000 , 5) 
             
             
             df.loc[len(df)] = item
 
-        if sumcnt >= 200:#allcodeindex:
+        if sumcnt >= allcodeindex:
             break
     df.sort_values(by=['외국인순매수비율'], axis=0, ascending=False, inplace=True)
     print(df)

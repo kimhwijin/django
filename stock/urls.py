@@ -14,11 +14,14 @@ urlpatterns = [
     #total
     path('stockinfo/total/index',views.Total_Init, name='total_stockdata_index'),
     path('stockinfo/total/home',views.Total_Home, name='total_stockdata_home'),
-    path('stockinfo/total/change',views.Total_SessionChange, name='total_stockdata_change'),
+    
+    #PER CHANGE
+    path('modify/<str:code_number>',views.Change_Per, name='change_per'),
 
     #search
     path('search/',views.Search_Info, name='search_info'),
     path('search/<str:stock_name>/<str:code_number>',views.Save_Favor, name='save_favor'),
+
     path('favor_detail/favor/<int:pk>',views.Delete_Favor, name='delete_favor'),
 
 ]

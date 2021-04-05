@@ -67,47 +67,15 @@
         </div>
         {% endwith %}
       </div>
-      
+    
+    <h4>목표 PER 그래프</h4>
+
      {% if graph %}
       <div style="width:600;height:500">
     {{ graph|safe }}
       </div>
     {% endif %}
-    
-    <!--{% if dataframe %}
-    {{ dataframe|safe }}
-    {% endif %}-->
-    <div style="width: 100%; height: 400px; overflow-y:auto; overflow-x: hidden;">
-    <div class="table-responsive">
-      <table class="table">
-      <thead>
-      <tr class="fixedHeader">
-      <th class = "text-center fixedHeader" scope="col">종목코드</th>
-      <th class = "text-center fixedHeader" scope="col">상장주식수</th>
-      <th class = "text-center fixedHeader" scope="col">당일외국인순매수</th>
-      <th class = "text-center fixedHeader" scope="col">당일기관순매수</th>
-      <th class = "text-center fixedHeader" scope="col">외국인순매수비율</th>
-      <th class = "text-center fixedHeader" scope="col">기관순매수비율</th>
-      </tr>
-      </thead>
-      <tbody>
-      {% for items in dataframe %}
-        <tr>
-        {% for item in items %}
-          <td class="text-center">{{item}}</td>
-        {% endfor %}
-        </tr>
-      {% endfor %}
-      </tbody>
-      </table>
-    </div>
-    </div>
-    <!--
-    <button type="button"  onclick="location.href='{% url 'stock:delete_favor' stockinfo.id%}'" class="btn btn-success">외국인순매수 정렬</button>
-    <button type="button"  onclick="location.href='{% url 'stock:delete_favor' stockinfo.id%}'" class="btn btn-success">기관순매수 정렬</button>
-    -->
-    session_id :{{session_id}}
-    test : {{test}}
+
       <!-- 시세현황 -->
     
       <div class="p-4 p-md-2 mb-4 border-bottom text-white rounded bg-secondary "><h4>시세현황</h4></div>
