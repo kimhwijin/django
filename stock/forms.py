@@ -18,6 +18,7 @@ class SearchKeywordForm(forms.Form):
 
 class PerInputForm(forms.Form):
     per_value = forms.IntegerField()
+    year_value = forms.CharField(max_length=4)
 
     def clean_per_value(self):
         data = self.cleaned_data['per_value']
@@ -25,6 +26,5 @@ class PerInputForm(forms.Form):
             data *= -1
         elif data == 0:
             data = 10
-            
         #check data
         return data

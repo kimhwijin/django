@@ -1,7 +1,8 @@
 from django.shortcuts import render,get_object_or_404
 from django.views.generic.base import TemplateView
 from django.views.generic import DetailView
-from stock.models import StockInfo
+from stock.models import StockInfo,PerInfo
+
 from django.http  import HttpResponseRedirect
 from django.urls import reverse
 # Create your views here.
@@ -51,12 +52,20 @@ def StockInfo_Detail_View(request,code_number):
     div = opy.plot(figure, auto_open=False, output_type='div')
     #--
     '''
+    #to-do per 변경
+    perinfo = PerInfo.objects.filter(stock_id=stockinfo.id).order_by('year')
+    if len(perinfo) < 3:
+        perinfo.delete()
+        for i in range(2015,2024):
+            PerInfo.objects.create(year=i, per=10,stock_id=stockinfo)
 
     context = {
         'stockinfo' : stockinfo,
         'detailinfo' : detailinfo,
         'deltaprice' : django_crawler.get_price_info(code_number),
-        'graph': django_crawler.makeGraph(code_number,stockinfo.per),
+        'graph': django_crawler.makeGraph(code_number,perinfo),
+        'perinfos':perinfo,
+
         #'dataframe' : django_crawler.todayRatio().values.tolist(),
     }
     return render(request,'stock/stockinfo_detail.html',context)
@@ -97,8 +106,13 @@ def Save_Favor(request,stock_name,code_number):
         per = 10
     #목표Per  default = 10
     print(per)
+    StockInfo.objects.create(name=stock_name, code=code_number)
+    stockinfo = get_object_or_404(StockInfo,code=code_number)
 
-    StockInfo.objects.create(name=stock_name, code=code_number,per=per)
+    for i in range(2015,2024):
+        PerInfo.objects.create(year=i, per=per,stock_id=stockinfo)
+    print('per base instance created')
+
     return HttpResponseRedirect(reverse('stock:stockinfo_detail', args=[code_number,]))
 
 
@@ -108,15 +122,32 @@ def Change_Per(request,code_number):
     stockinfo = get_object_or_404(StockInfo,code=code_number)
 
     per_input_form = PerInputForm(request.POST)
-
     if per_input_form.is_valid():
         per = per_input_form.cleaned_data['per_value']
+        year = per_input_form.cleaned_data['year_value']
     else:
         per = 10
-    print('Change_Per')
+        year = 2015
+        print("per form is not valid")
 
-    stockinfo.per = per
-    stockinfo.save()
+    print('Change_Per')
+    if year == 'all':
+        perinfo_set = PerInfo.objects.filter(stock_id=stockinfo.id)
+        for perinfo in perinfo_set:
+            perinfo.per = per
+            perinfo.save()
+
+    else:
+        year = int(year)
+
+        if PerInfo.objects.filter(stock_id=stockinfo.id,year=year):
+            print("exist")
+            perinfo = get_object_or_404(PerInfo,stock_id=stockinfo.id,year=year)
+            perinfo.per = per
+            perinfo.save()
+        else:
+            print("per create")
+            PerInfo.objects.create(year=year, per=per,stock_id=stockinfo)
 
     return HttpResponseRedirect(reverse('stock:stockinfo_detail', args=[code_number,]))
 

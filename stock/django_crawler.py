@@ -176,7 +176,7 @@ import plotly.offline as opy
 from pywinauto import application
 import os
 
-def makeGraph(code_number,per_value):
+def makeGraph(code_number,per_info):
     print('debuging makegraph')
 
 
@@ -215,7 +215,7 @@ def makeGraph(code_number,per_value):
     stock_name = instCpStockCode.CodeToName(stock_code)
 
     #웹에서 받아옴
-    per = per_value
+    per = 10 #per_value
     table_name = stock_name
 
     now = time.strftime('%Y%m%d')
@@ -268,33 +268,15 @@ def makeGraph(code_number,per_value):
     # datetime 를 이용해서 날짜로 변환
     df1['Date'] = pd.to_datetime(df1['Date'])
 
+
     # 스크랩한 데이터에서 검색하려는 종목명과 일치하는 것을 찾아내기
     #sam
     is_stock_row = testdf['종목명'] == stock_name
-    # 스크랩한 데이터에서 '2019/12'가 포함되는 것을 찾아내기
-    is_data2019 = testdf['index'] == '2019/12'
 
-    #testdf_data2019 = testdf[data2019]
-
-    #data2021 = (testdf['발행주식수'] == '2021/12(E)')
-    #testdf_data2021 = testdf[data2021]
-
-    # 여러 조건에 부합되는 결과값 (& and // | or)
-    # '종목명'과 '2019/12'가 포함된 데이터만 찾기
-    testdf_total = testdf[is_stock_row & is_data2019]
     #모든기간의 종목데이터
     testdf_stock_row = testdf[is_stock_row]
-
-
-    # API를 통해서 최신 발행주식수를 가져오는 것이 'Best'이지만... 코드가 많이 추가되니 간단하게 넘어감..ㅋㅋ
-    # 스크랩한 데이터 중 발행주식수가 있으니 2019년의 발행주식수를 가져옴
-    stock_num = testdf_total['발행주식수'].copy()
-    stock_num = int(stock_num.values)
-    # 나만의 목표가 계산식
-    testdf_stock_row['적정가격'] = round((testdf_stock_row['영업이익'] * per *100000000 / (stock_num * 1000) + (testdf_stock_row['EPS(원)']*per)) /2,-2)
-    #testdf_sam[['index', '적정가격']]
-    #testdf_sam['index'] = testdf_sam['index'].astype('str')
-    print(testdf_stock_row['적정가격'])
+    print(testdf_stock_row)
+    
 
     # 적정가격을 차트상에 표시하기 위해 일자로 변경
     # 단순작업으로 바꾸는 코드... 이기 때문에 2024, 2025가 되더라도 작동하도록 수정할 것
@@ -311,6 +293,27 @@ def makeGraph(code_number,per_value):
     testdf_stock_row['index'] = testdf_stock_row['index'] + Week(weekday=4)
     #testdf_sam[['index', '적정가격']]
     #testdf_sam
+
+    # API를 통해서 최신 발행주식수를 가져오는 것이 'Best'이지만... 코드가 많이 추가되니 간단하게 넘어감..ㅋㅋ
+    #Api로 상장주식수 가져옴
+    stock_code = instCpStockCode.NameToCode(stock_name)
+    inStockMst.SetInputValue(0,stock_code)
+    inStockMst.BlockRequest()
+    stock_num = float(inStockMst.GetHeaderValue(31))
+    #단위 주
+    # 나만의 목표가 계산식
+    for index in testdf_stock_row.index:
+        perindex = 0
+        for perindex in range(len(per_info)):
+            if str(testdf_stock_row.loc[index,'index'])[:4] == str(per_info[perindex].year):
+                print(perindex)
+                per = per_info[perindex].per
+                break;
+            else:
+                per = per_info[len(per_info)-1].per
+
+        testdf_stock_row.loc[index,'적정가격'] = round((testdf_stock_row.loc[index,'영업이익'] * per * 100000000 / stock_num + (testdf_stock_row.loc[index,'EPS(원)']* per)) /2,-2)
+    print(testdf_stock_row['적정가격'])
 
 
 

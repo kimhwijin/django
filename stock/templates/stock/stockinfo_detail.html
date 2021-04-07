@@ -24,7 +24,7 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">{{stockinfo.name}}을 관심목록에서 제거하시겠습니까?</h5>
+                    <h5 class="modal-title" id="exampleModalLabel">{{stockinfo.name}}을(를) 관심목록에서 제거하시겠습니까?</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                     </button>
@@ -72,23 +72,114 @@
     <h4>목표 주가 그래프</h4>
     </div>
 
+    <!--PER FORM-->
     <form action="{% url 'stock:change_per' stockinfo.code %}" method="post">
       {% csrf_token %}
       {{form}}
       <div class="row">
-        <div class="col-lg-2"><input class="form-control mb-2 " name="per_value" type="PER" placeholder="목표 PER" aria-label="Per"></div>
-        <div class="col"><button type="submit" class="btn btn-success">PER 변경</button></div>  
+        <div class="col-md-1" >
+          <strong>연도별 PER</strong>
+        </div>
+        <div class="col-md-2">
+          <!--<label for="inputYear" class="form-label"><strong>연도</strong></label>-->
+          <select class="form-control" name="year_value" type="YEAR" placeholder="연도" aria-label="Year">
+            <option>ALL</option>
+            {% for perinfo in perinfos %}
+                <option>{{perinfo.year}}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-2">
+          <!--<label for="inputPer" class="form-label"><strong>Per</strong></label>-->
+          <input class="form-control" name="per_value" type="PER" placeholder="목표 PER" aria-label="Per">
+        </div>
+        <div class="col-md-1">
+          <button type="submit" class="btn btn-success btn-block">PER 변경</button>
+        </div>
+
+        <div class="col-md-1">
+        <!-- Button trigger modal -->
+        <a class="btn btn-outline-success" href="#" role="button" data-toggle="modal" data-target="#exampleModa2">
+        PER 적용년도 추가 
+        </a>
+        </div>
+        
       </div>
     </form>
 
-     {% if graph %}
+    <!--modal-->
+    <div class="modal fade" id="exampleModa2" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabe2" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">새로운 PER적용 연도를 추가하시겠습니까?</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-footer">
+            <form action="{% url 'stock:change_per' stockinfo.code %}" method="post">
+              {% csrf_token %}
+              {{form}}
+              <div class="row">
+                <div class="col-md-4">
+                  <select class="form-control" name="year_value" type="YEAR" placeholder="연도" aria-label="Year">
+                    {% for perinfo in perinfos %}
+                        {% if forloop.last %}
+                          <option>{{perinfo.year|add:1}}</option>
+                        {% endif %}
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <div class="col-md-4">
+                  <!--<label for="inputPer" class="form-label"><strong>Per</strong></label>-->
+                  <input class="form-control" name="per_value" type="PER" placeholder="목표 PER" aria-label="Per">
+                </div>
+                <div class="col-md-2">
+                  <button type="submit" class="btn btn-success">추가</button>
+                </div>
+                <div class="col-md-2">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">취소</button>
+                </div>
+
+              </div>  
+            </form>
+        </div>
+        </div>
+    </div>
+    </div>
+
+
+
+    <br>
+    <table class="table">
+      <thead>
+        <tr>
+          {% for perinfo in perinfos %}
+            <th scope="col">{{perinfo.year}}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          {% for perinfo in perinfos %}
+            <td>{{perinfo.per}}</td>
+          {% endfor %}
+        </tr>
+      </tbody>
+    </table>
+    {% if graph %}
       <div style="width:600;height:500">
     {{ graph|safe }}
       </div>
     {% endif %}
 
-      <!-- 시세현황 -->
     
+      <!-- 시세현황 -->
+      <br>
+
       <div class="p-4 p-md-2 mb-4 border-bottom text-white rounded bg-secondary "><h4>시세현황</h4></div>
 
       {% with detailinfo.1 as priceinfo %}
