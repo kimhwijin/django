@@ -206,6 +206,7 @@ def makeGraph(code_number,per_info):
         exit(0)
 
     testdf = pd.read_excel(os.getcwd() + '\\stock\\21.02.05_stock_data.xlsx')
+
     #종목번호 -> 종목명
     instCpStockCode = win32com.client.Dispatch("CpUtil.CpStockCode")
     if instCpStockCode:
@@ -300,13 +301,19 @@ def makeGraph(code_number,per_info):
     inStockMst.SetInputValue(0,stock_code)
     inStockMst.BlockRequest()
     stock_num = float(inStockMst.GetHeaderValue(31))
+    #상장주식수20억이상이면 1000주단위로 받아옴
+    g_objCodeMgr = win32com.client.Dispatch('CpUtil.CpCodeMgr')
+    if g_objCodeMgr.IsBigListingStock(stock_code):
+        #상장주식수를 주 단위로 변경함
+        stock_num *= 1000
+        
     #단위 주
     # 나만의 목표가 계산식
+    #index 의 year 별로 per 을 따로 지정해 적정가격을 형성한다
     for index in testdf_stock_row.index:
         perindex = 0
         for perindex in range(len(per_info)):
             if str(testdf_stock_row.loc[index,'index'])[:4] == str(per_info[perindex].year):
-                print(perindex)
                 per = per_info[perindex].per
                 break;
             else:
@@ -314,7 +321,7 @@ def makeGraph(code_number,per_info):
 
         testdf_stock_row.loc[index,'적정가격'] = round((testdf_stock_row.loc[index,'영업이익'] * per * 100000000 / stock_num + (testdf_stock_row.loc[index,'EPS(원)']* per)) /2,-2)
     print(testdf_stock_row['적정가격'])
-
+    print('발행주식수: ',stock_num)
 
 
     # 현재주가 추출

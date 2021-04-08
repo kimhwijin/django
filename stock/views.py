@@ -131,7 +131,7 @@ def Change_Per(request,code_number):
         print("per form is not valid")
 
     print('Change_Per')
-    if year == 'all':
+    if year == 'ALL':
         perinfo_set = PerInfo.objects.filter(stock_id=stockinfo.id)
         for perinfo in perinfo_set:
             perinfo.per = per

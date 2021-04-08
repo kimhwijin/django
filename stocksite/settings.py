@@ -27,7 +27,7 @@ with open('secret_key.txt') as f:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost','127.0.0.1','192.168.0.10','14.52.23.30']
+ALLOWED_HOSTS = ['localhost','127.0.0.1','192.168.0.10','14.52.23.30','124.50.50.123']
 
 
 # Application definition
