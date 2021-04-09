@@ -8,7 +8,6 @@ class StockInfo(models.Model):
     
 
     class Meta:
-        managed = True
         db_table = 'stock_stockinfo'
 
     def __str__(self):
@@ -21,7 +20,6 @@ class PerInfo(models.Model):
     stock_id = models.ForeignKey(StockInfo, on_delete=models.CASCADE, db_column="stock_id")
     
     class Meta:
-        managed = True
         db_table = 'stock_perinfo'
 
     def __str__(self):

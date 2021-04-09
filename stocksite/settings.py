@@ -27,7 +27,7 @@ with open('secret_key.txt') as f:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost','127.0.0.1','192.168.0.10','14.52.23.30','124.50.50.123']
+ALLOWED_HOSTS = ['localhost','127.0.0.1','192.168.0.10','14.52.23.30']
 
 
 # Application definition
@@ -84,7 +84,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'django_db',
         'USER': 'root',
-        'PASSWORD': 'Gnlwls01!',
+        'PASSWORD': '1234',
         'HOST': '127.0.0.1',
         'PORT': '3306',
     }

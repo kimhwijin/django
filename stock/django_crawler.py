@@ -205,7 +205,6 @@ def makeGraph(code_number,per_info):
         print("서버가 정상적으로 연결되지 않았습니다. ")
         exit(0)
 
-    testdf = pd.read_excel(os.getcwd() + '\\stock\\21.02.05_stock_data.xlsx')
 
     #종목번호 -> 종목명
     instCpStockCode = win32com.client.Dispatch("CpUtil.CpStockCode")
@@ -270,31 +269,6 @@ def makeGraph(code_number,per_info):
     df1['Date'] = pd.to_datetime(df1['Date'])
 
 
-    # 스크랩한 데이터에서 검색하려는 종목명과 일치하는 것을 찾아내기
-    #sam
-    is_stock_row = testdf['종목명'] == stock_name
-
-    #모든기간의 종목데이터
-    testdf_stock_row = testdf[is_stock_row]
-    print(testdf_stock_row)
-    
-
-    # 적정가격을 차트상에 표시하기 위해 일자로 변경
-    # 단순작업으로 바꾸는 코드... 이기 때문에 2024, 2025가 되더라도 작동하도록 수정할 것
-    testdf_stock_row.loc[testdf_stock_row['index'] == '2020/12(P)','index'] ='2020/12'
-    testdf_stock_row.loc[testdf_stock_row['index'] == '2020/12(E)','index'] ='2020/12'
-    testdf_stock_row.loc[testdf_stock_row['index'] == '2021/12(E)','index'] ='2021/12'
-    testdf_stock_row.loc[testdf_stock_row['index'] == '2022/12(E)','index'] ='2022/12'
-    testdf_stock_row.loc[testdf_stock_row['index'] == '2023/12(E)','index'] ='2023/12'
-
-    # datetime을 이용해 년/월 형식으로 수정함 (2020/12 -> 2020-12-01)
-    testdf_stock_row['index'] = pd.to_datetime(testdf_stock_row['index'], format='%Y/%m')
-
-    # 2019-12-01의 경우 일요일(주말)이라 차트상에 표시가 안되는 현상을 방지하고자, 일자를 바꿈
-    testdf_stock_row['index'] = testdf_stock_row['index'] + Week(weekday=4)
-    #testdf_sam[['index', '적정가격']]
-    #testdf_sam
-
     # API를 통해서 최신 발행주식수를 가져오는 것이 'Best'이지만... 코드가 많이 추가되니 간단하게 넘어감..ㅋㅋ
     #Api로 상장주식수 가져옴
     stock_code = instCpStockCode.NameToCode(stock_name)
@@ -306,22 +280,64 @@ def makeGraph(code_number,per_info):
     if g_objCodeMgr.IsBigListingStock(stock_code):
         #상장주식수를 주 단위로 변경함
         stock_num *= 1000
-        
-    #단위 주
-    # 나만의 목표가 계산식
-    #index 의 year 별로 per 을 따로 지정해 적정가격을 형성한다
-    for index in testdf_stock_row.index:
-        perindex = 0
-        for perindex in range(len(per_info)):
-            if str(testdf_stock_row.loc[index,'index'])[:4] == str(per_info[perindex].year):
-                per = per_info[perindex].per
-                break;
-            else:
-                per = per_info[len(per_info)-1].per
 
-        testdf_stock_row.loc[index,'적정가격'] = round((testdf_stock_row.loc[index,'영업이익'] * per * 100000000 / stock_num + (testdf_stock_row.loc[index,'EPS(원)']* per)) /2,-2)
-    print(testdf_stock_row['적정가격'])
-    print('발행주식수: ',stock_num)
+
+
+    df_stock_row = pd.DataFrame(columns= ['index','적정가격'])
+    path_dir = os.getcwd() + '\\stock\\excel_files\\'
+    file_list = os.listdir(path_dir)
+    excel_list = [excel for excel in file_list if excel.endswith(".xlsx")]
+
+    for excel_name in excel_list:
+        print(path_dir + excel_name)
+        excel_year = excel_name[:4]
+        excel_month = excel_name[5:7]
+        excel_day = excel_name[8:10]
+
+        testdf = pd.read_excel(path_dir + excel_name)
+        is_stock_row = testdf['종목명'] == stock_name
+        testdf_stock_row = testdf[is_stock_row]
+
+        # 적정가격을 차트상에 표시하기 위해 일자로 변경
+        # 단순작업으로 바꾸는 코드... 이기 때문에 2024, 2025가 되더라도 작동하도록 수정할 것
+        testdf_stock_row.loc[testdf_stock_row['index'] == '2020/12(P)','index'] ='2020/' + excel_month + '/' + excel_day
+        testdf_stock_row.loc[testdf_stock_row['index'] == '2020/12(E)','index'] ='2020/' + excel_month + '/' + excel_day 
+        testdf_stock_row.loc[testdf_stock_row['index'] == '2021/12(E)','index'] ='2021/' + excel_month + '/' + excel_day
+        testdf_stock_row.loc[testdf_stock_row['index'] == '2022/12(E)','index'] ='2022/' + excel_month + '/' + excel_day
+        testdf_stock_row.loc[testdf_stock_row['index'] == '2023/12(E)','index'] ='2023/' + excel_month + '/' + excel_day
+
+        # datetime을 이용해 년/월 형식으로 수정함 (2020/12 -> 2020-12-01)
+        testdf_stock_row['index'] = pd.to_datetime(testdf_stock_row['index'], format='%Y/%m/%d')
+         #단위 주
+        # 나만의 목표가 계산식
+        #index 의 year 별로 per 을 따로 지정해 적정가격을 형성한다
+        for index in testdf_stock_row.index:
+            perindex = 0
+            for perindex in range(len(per_info)):
+                if str(testdf_stock_row.loc[index,'index'])[:4] == str(per_info[perindex].year):
+                    per = per_info[perindex].per
+                    break;
+                else:
+                    per = per_info[len(per_info)-1].per
+
+            testdf_stock_row.loc[index,'적정가격'] = round((testdf_stock_row.loc[index,'영업이익'] * per * 100000000 / stock_num + (testdf_stock_row.loc[index,'EPS(원)']* per)) /2,-2)
+        
+        df_stock_row = df_stock_row.append(testdf_stock_row[['index','적정가격']].copy())
+        print('tf',testdf_stock_row[['index','적정가격']])    
+    
+    #중복제거
+    df_stock_row = df_stock_row.drop_duplicates(['index'])
+    #날자별 정렬
+    df_stock_row = df_stock_row.sort_values(by=['index'], axis=0)
+    df_stock_row.index = range(len(df_stock_row))
+    
+    for _index in df_stock_row.index:  
+        if df_stock_row.loc[_index,'index'].weekday() > 4:
+            df_stock_row.loc[_index,'index'] = df_stock_row.loc[_index,'index'] + Week(weekday=3)
+        if df_stock_row.loc[_index,'적정가격'] == 0:
+            df_stock_row = df_stock_row.drop(index=_index)
+    
+    print('last df',df_stock_row)
 
 
     # 현재주가 추출
@@ -343,8 +359,7 @@ def makeGraph(code_number,per_info):
                     open=df1['Open'],
                     high=df1['High'],
                     low=df1['Low'],
-                    close=df1['Close'])])
-    print(fig)                    
+                    close=df1['Close'])])         
     
     fig.update_layout(
         margin=dict(l=20, r=20, t=60, b=20),
@@ -353,7 +368,9 @@ def makeGraph(code_number,per_info):
 
     fig.add_trace(go.Scatter(
         name="목표주가",
-        mode="markers+lines", x=testdf_stock_row["index"], y=testdf_stock_row["적정가격"],
+        mode="markers+lines", 
+        x = df_stock_row["index"], 
+        y = df_stock_row["적정가격"],
         xperiod="M1",
         xperiodalignment="middle",
     ))
