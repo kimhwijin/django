@@ -21,8 +21,9 @@ db : django_db
 - 비밀번호 입력
 - use django_db
 - show tables;
-- 1. 
-
+- stock_stockinfo => 관심목록 테이블
+- stock_perinfo => 종목 연도별 지정한 per 값
+- select * from table-name;
 
 
 Anaconda3 32bit 환경 설치
