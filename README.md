@@ -1,4 +1,4 @@
-개발용 서버 실행:
+#개발용 서버 실행:
 - anaconda venv_mysite 프롬프트 관리자 모드 실행
 - manage.py 가 있는 곳에서
 - python manage.py runserver
@@ -9,14 +9,14 @@
 - 명령프롬프트 관리자모드 실행
 - c:\nginx폴더
 - nginx.exe 실행
-- # 운용 서버 실행시 7일 + 8시간 타이머 작동
+- 운용 서버 실행시 7일 + 8시간 타이머 작동
 
-MYSQL :
+#MYSQL :
 id : root
 password : 1234
 db : django_db
 
-DB 조회 방법 :
+#DB 조회 방법 :
 - mysql commend line 실행
 - 비밀번호 입력
 - use django_db
